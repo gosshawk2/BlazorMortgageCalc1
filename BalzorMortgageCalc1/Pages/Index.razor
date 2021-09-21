@@ -1,0 +1,113 @@
+﻿@page "/"
+
+@using BalzorMortgageCalc1.Models
+
+<div class="card mx-auto mt-5" style="width: 60rem;">
+    <div class="card-header">
+        <label style="">Calculate Monthly Mortgage Repayment</label>
+    </div>
+
+    <div class="card-body">
+        <EditForm Model="@model" OnValidSubmit="HandleValidSubmit">
+
+            <DataAnnotationsValidator />
+            <ValidationSummary />
+
+            <div class="form-group">
+                <label>Principal Amount:</label>
+                <InputNumber @bind-Value="model.PrincipalAmount" class="form-control" />
+            </div>
+
+            <div class="form-group">
+                <label>Number of Monthly Payments (15yrs = 180, 30yrs = 360):</label>
+                <InputNumber @bind-Value="model.NumberMonthlyPayments" class="form-control" />
+            </div>
+
+            <div class="form-group">
+                <label>Interest APR:</label>
+                <InputNumber @bind-Value="model.InterestAPR" class="form-control" />
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-block">Submit</button>
+        </EditForm>
+    </div>
+
+    <div class="card-footer">
+        <div class="row">
+            <div class="col">Principal Amount</div>
+            <div class="col">#Monthly Payments</div>
+            <div class="col">Rate Per Month</div>
+            <div class="col">Monthly Payment</div>
+            <div class="col">Total Cost</div>
+            <div class="col">Total Interest</div>
+        </div>
+        <div class="row">
+            <div class="col">@strP</div>
+            <div class="col">@NumberPayments</div>
+            <div class="col">@strI</div>
+            <div class="col">@strMonthlyPayment</div>
+            <div class="col">@strTotalCost</div>
+            <div class="col">@strTotalInterest</div>
+        </div>
+    </div>
+
+</div>
+
+@code {
+    private MortgageModel model = new MortgageModel();
+    private double PrincipalAmount;
+    private int NumberPayments;
+    private double APR;
+    private double MonthlyInterest;
+    private double MonthlyPayment;
+    private double TotalCost;
+    private double TotalInterest;
+    private string strP;
+    private string strI;
+    private string strMonthlyPayment;
+    private string strTotalCost;
+    private string strTotalInterest;
+
+    private double MonthlyCalc(double P, int N, double I)
+    {
+        double Calc1;
+        double Calc2;
+        double Calc3;
+        double Calc4;
+        double Calc5;
+        double Calc6;
+
+
+        Calc1 = 1 + I;
+        //Pow() function uses double type rather than decimal type:
+        Calc2 = Math.Pow(Calc1, N);
+        Calc3 = Calc2 - 1;
+        Calc4 = I * Calc2;
+        Calc5 = Calc4 / Calc3;
+        Calc6 = P * Calc5;
+        //Calc6 = Math.Round(Calc6, 2, MidpointRounding.AwayFromZero);
+
+        return Calc6;
+    }
+
+    private void HandleValidSubmit()
+    {
+        PrincipalAmount = model.PrincipalAmount;
+        strP = string.Format("{0:F2}",PrincipalAmount);
+        NumberPayments = model.NumberMonthlyPayments;
+        APR = model.InterestAPR;
+        MonthlyInterest = (APR / 100) / 12;
+        strI = string.Format("{0:F2}", MonthlyInterest);
+        MonthlyPayment = MonthlyCalc(PrincipalAmount, NumberPayments, MonthlyInterest);
+        if (MonthlyPayment>0)
+        {
+            TotalCost = NumberPayments * MonthlyPayment;
+            TotalInterest = TotalCost - PrincipalAmount;
+            TotalCost = Math.Round(TotalCost, 2, MidpointRounding.AwayFromZero);
+            TotalInterest = Math.Round(TotalInterest, 2, MidpointRounding.AwayFromZero);
+        }
+        strMonthlyPayment = string.Format("{0:F2}", MonthlyPayment);
+        strTotalCost = string.Format("{0:F2}", TotalCost);
+        strTotalInterest = string.Format("{0:F2}", TotalInterest);
+    }
+}
